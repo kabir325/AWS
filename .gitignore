@@ -1,0 +1,7 @@
+# Source slides: large, not used by the site, and not ours to redistribute
+*.pdf
+
+node_modules/
+.vercel
+.DS_Store
+*.log
