@@ -27,15 +27,39 @@
   const Store = {
     key: 'saa-revision-v1',
     data: null,
+    listeners: [],
     get() {
       if (!this.data) {
-        try { this.data = JSON.parse(localStorage.getItem(this.key)) || {}; } catch (e) { this.data = {}; }
-        ['q', 'best', 'known', 'sec', 'map', 'done', 'days'].forEach(k => { this.data[k] = this.data[k] || {}; });
-        this.data.mocks = this.data.mocks || [];
+        let d = null;
+        try { d = JSON.parse(localStorage.getItem(this.key)); } catch (e) { /* corrupt or disabled */ }
+        this.load(d);
       }
       return this.data;
     },
-    save() { try { localStorage.setItem(this.key, JSON.stringify(this.data)); } catch (e) { /* storage full or disabled */ } },
+    load(d) {
+      this.data = d && typeof d === 'object' && !Array.isArray(d) ? d : {};
+      ['q', 'best', 'known', 'sec', 'map', 'done', 'days'].forEach(k => { this.data[k] = this.data[k] || {}; });
+      this.data.mocks = this.data.mocks || [];
+    },
+    /* Replace contents in place: open views hold references to these objects (e.g. flashcards' known map). */
+    replace(d) {
+      const cur = this.get();
+      if (d === cur) return;
+      const isMap = v => v && typeof v === 'object' && !Array.isArray(v);
+      Object.keys(cur).forEach(k => { if (!(k in d)) delete cur[k]; });
+      Object.keys(d).forEach(k => {
+        if (isMap(cur[k]) && isMap(d[k])) {
+          Object.keys(cur[k]).forEach(x => delete cur[k][x]);
+          Object.assign(cur[k], d[k]);
+        } else cur[k] = d[k];
+      });
+      this.load(cur);
+    },
+    /* quiet=true skips listeners (used when cloud sync itself writes). */
+    save(quiet) {
+      try { localStorage.setItem(this.key, JSON.stringify(this.data)); } catch (e) { /* storage full or disabled */ }
+      if (!quiet) this.listeners.forEach(fn => fn());
+    },
     touch() { const d = this.get(), k = dayKey(new Date()); d.days[k] = (d.days[k] || 0) + 1; },
     record(id, ok) {
       const r = this.get().q[id] = this.get().q[id] || { c: 0, w: 0 };
@@ -511,7 +535,7 @@
           </div></div></div>
         <div class="panel"><div class="panel-t">activity</div>${heatmap(20)}</div>
         <div class="panel"><div class="panel-t">backup</div>
-          <p class="muted small">Progress lives in this browser's local storage. Export it to move between browsers or machines.</p>
+          <p class="muted small">Progress lives in this browser's local storage. Sign in with [login] at the top to sync it across devices, or export it as a file.</p>
           <div class="row-actions">
             <button class="btn" data-act="export">export json</button>
             <label class="btn">import json<input type="file" accept="application/json" data-act="import" hidden></label>
@@ -563,8 +587,9 @@
         try {
           const data = JSON.parse(t);
           if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('not a progress backup file');
-          Store.data = null;
-          localStorage.setItem(Store.key, JSON.stringify(data));
+          // resetAt makes an import or reset win over older cloud copies when syncing.
+          Store.load(Object.assign(data, { resetAt: Date.now() }));
+          Store.save();
           refresh();
           viewProgress(main, filter);
         } catch (err) { alert('Could not import: ' + err.message); }
@@ -572,8 +597,8 @@
     };
     $('[data-act="reset"]', main).onclick = () => {
       if (!confirm('Delete ALL progress: sections, done topics, answers, scores, mocks, flashcards and activity?')) return;
-      try { localStorage.removeItem(Store.key); } catch (e) { /* storage disabled */ }
-      Store.data = null;
+      Store.load({ resetAt: Date.now() });
+      Store.save();
       refresh();
       viewProgress(main, filter);
     };
@@ -842,6 +867,13 @@ ${wrong.length}</pre>
       if (e.key === '[') toggleSide();
     });
   }
+
+  /* Hooks for js/sync.js (Firebase cloud sync). */
+  window.SAA = {
+    progress: () => Store.get(),
+    replaceProgress: d => { Store.replace(d); Store.save(true); refresh(); },
+    onSave: fn => Store.listeners.push(fn)
+  };
 
   initChrome();
   renderSidebar();

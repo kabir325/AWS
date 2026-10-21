@@ -30,7 +30,18 @@ Progress (scores, mistakes, known flashcards) is saved in the browser's local st
 
 The site is fully static: no backend, no database, no npm dependencies. `vercel.json` tells Vercel to serve the `site/` folder and to run `node tools/build-docs.js` as the build step, so a deploy fails if the data is invalid.
 
-Progress is stored per browser in local storage; use **progress -> export / import json** to move it between devices.
+Progress is stored per browser in local storage; use **progress -> export / import json** to move it between devices, or turn on cloud sync below.
+
+## Cloud sync (optional, Firebase)
+
+Signing in with Google syncs progress across devices through Firestore (one document per user at `progress/{uid}`). Sync is off until `site/js/firebase-config.js` has an `apiKey`.
+
+1. Firebase console -> your project -> **Build -> Authentication -> Get started -> Sign-in method -> Google -> Enable**.
+2. **Authentication -> Settings -> Authorized domains -> Add domain**: your Vercel domain (e.g. `aws-xyz.vercel.app`). `localhost` is there by default.
+3. **Build -> Firestore Database -> Create database** (production mode, any region), then **Rules**: paste `firestore.rules` and **Publish**.
+4. **Project settings -> Your apps -> Add app -> Web (</>)**, copy the `firebaseConfig` values into `site/js/firebase-config.js`, commit and push.
+
+Merging: answers keep whichever device has more attempts, best scores take the max, reviewed sections / known cards / done topics are combined. **reset all** and **import json** replace the cloud copy too.
 
 ## Editing content
 
