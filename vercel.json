@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "buildCommand": "node tools/build-docs.js",
+  "buildCommand": "node tools/build-docs.js && node tools/write-firebase-config.js",
   "outputDirectory": "site",
   "headers": [
     {

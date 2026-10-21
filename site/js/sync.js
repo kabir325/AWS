@@ -44,9 +44,10 @@ async function init() {
     import(SDK + 'firebase-auth.js'),
     import(SDK + 'firebase-firestore.js')
   ]);
-  const app = initializeApp(config);
+  const { databaseId, ...options } = config;
+  const app = initializeApp(options);
   const a = auth.getAuth(app);
-  const db = fs.getFirestore(app);
+  const db = databaseId ? fs.getFirestore(app, databaseId) : fs.getFirestore(app);
   let user = null, timer = null, busy = false;
 
   btn.classList.remove('hidden');

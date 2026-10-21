@@ -39,7 +39,7 @@ Signing in with Google syncs progress across devices through Firestore (one docu
 1. Firebase console -> your project -> **Build -> Authentication -> Get started -> Sign-in method -> Google -> Enable**.
 2. **Authentication -> Settings -> Authorized domains -> Add domain**: your Vercel domain (e.g. `aws-xyz.vercel.app`). `localhost` is there by default.
 3. **Build -> Firestore Database -> Create database** (production mode, any region), then **Rules**: paste `firestore.rules` and **Publish**.
-4. **Project settings -> Your apps -> Add app -> Web (</>)**, copy the `firebaseConfig` values into `site/js/firebase-config.js`, commit and push.
+4. **Project settings -> Your apps -> Add app -> Web (</>)** and copy the `firebaseConfig` values into Vercel **Settings -> Environment Variables**: `FIREBASE_API_KEY`, `FIREBASE_AUTH_DOMAIN`, `FIREBASE_PROJECT_ID`, `FIREBASE_STORAGE_BUCKET`, `FIREBASE_MESSAGING_SENDER_ID`, `FIREBASE_APP_ID`, and `FIREBASE_FIRESTORE_DATABASE_ID` if the database is not `(default)`. The build writes them into `site/js/firebase-config.js` (`tools/write-firebase-config.js`); redeploy after changing them. The committed file is the fallback for local use.
 
 Merging: answers keep whichever device has more attempts, best scores take the max, reviewed sections / known cards / done topics are combined. **reset all** and **import json** replace the cloud copy too.
 
