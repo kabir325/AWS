@@ -3,10 +3,10 @@
  * Leave apiKey empty to disable cloud sync (the site then works offline with local storage only).
  */
 export default {
-  apiKey: 'AIzaSyC95CfbeZMq2YachYg-KITDsyBeIG0APb0',
-  authDomain: 'aws-saa-f9045.firebaseapp.com',
-  projectId: 'aws-saa-f9045',
-  storageBucket: 'aws-saa-f9045.firebasestorage.app',
-  messagingSenderId: '879136722120',
-  appId: '1:879136722120:web:25ba48dd67bd7fb8aa69fd'
+  apiKey: 'AIzaSyAdbcAnOAabnHZLkfuWq23yN-7ZCP6kscM',
+  authDomain: 'gen-lang-client-0223413676.firebaseapp.com',
+  projectId: 'gen-lang-client-0223413676',
+  storageBucket: 'gen-lang-client-0223413676.firebasestorage.app',
+  messagingSenderId: '647489887687',
+  appId: '1:647489887687:web:a36ae504fa29435101cde2'
 };
