@@ -32,9 +32,19 @@ function merge(local, remote) {
   return out;
 }
 
+let lastError = null;
+
 function show(label, title) {
   btn.textContent = label;
   btn.title = title;
+}
+
+function fail(e) {
+  lastError = e;
+  const hint = e.code === 'permission-denied'
+    ? ' (Firestore rules do not allow progress/{uid}: publish firestore.rules on this database)'
+    : e.code === 'not-found' ? ' (Firestore database not found: check FIREBASE_FIRESTORE_DATABASE_ID)' : '';
+  show('[sync!]', 'Sync failed: ' + e.message + hint + '. Click for details.');
 }
 
 async function init() {
@@ -62,9 +72,10 @@ async function init() {
         data: JSON.stringify(window.SAA.progress()),
         updated: fs.serverTimestamp()
       });
+      lastError = null;
       show('[synced]', `Progress synced as ${user.email}. Click to sign out.`);
     } catch (e) {
-      show('[sync!]', 'Sync failed: ' + e.message);
+      fail(e);
     }
   }
 
@@ -77,7 +88,7 @@ async function init() {
       if (snap.exists()) window.SAA.replaceProgress(merge(window.SAA.progress(), JSON.parse(snap.data().data)));
       await push();
     } catch (e) {
-      show('[sync!]', 'Sync failed: ' + e.message);
+      fail(e);
     } finally {
       busy = false;
     }
@@ -100,6 +111,12 @@ async function init() {
   });
 
   btn.onclick = async () => {
+    if (user && lastError) {
+      const msg = btn.title.replace('. Click for details.', '');
+      if (confirm(msg + `\n\nSigned in as ${user.email}.\nOK = retry sync, Cancel = sign out.`)) pull();
+      else auth.signOut(a);
+      return;
+    }
     if (user) {
       if (confirm(`Signed in as ${user.email}.\nSign out? Progress stays in this browser.`)) auth.signOut(a);
       return;
